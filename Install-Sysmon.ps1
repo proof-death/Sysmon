@@ -1,8 +1,4 @@
-# Autor do script: Roberto Rodriguez (@Cyb3rWard0g)
 # Licenca: GPL-3.0
-
-# Referencias:
-# https://medium.com/@cosmin.ciobanu/enhanced-endpoint-detection-using-sysmon-and-wef-3b65d491ff95
 
 [CmdletBinding()]
 param (
@@ -50,7 +46,7 @@ if (!(Test-Path $SysmonFile)) { Write-Error "File $SysmonFile nao existe" -Error
 write-Host "[+] Instalando Sysmon.."
 & $SysmonBinary -i C:\ProgramData\sysmon.xml -accepteula
 
-write-Host "[+] Configurando sysmon para ini­cio automatico.."
+write-Host "[+] Configurando sysmon para iniÂ­cio automatico.."
 & sc.exe config Sysmon start= auto
 
 # Setting Sysmon Channel Access permissions
