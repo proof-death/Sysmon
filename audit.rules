@@ -1,0 +1,447 @@
+# Tamanho do buffer #
+## Aumento de valor pode causar problemas no sistema Operacional##
+-b 8192
+
+# Modo de falha
+## Variaveis: 0 (silent), 1 (mostra mensagem de falha), 2 (panic)
+-f 1
+
+# Ignorar erros
+## e.g. Causados por usuários ou arquivos não encontrados
+-i
+
+# Auto Auditoria ---------------------------------------------------------------
+
+## Auditando o Audit Logs
+### Tentativas de sucesso e falha pra ler as informações a partir dos arquivos de auditoria
+-w /var/log/audit/ -k auditlog
+
+## Configuração do Auditd
+###Modificações nas configurações do Auditd durante o funcionamento e operação do serviço
+-w /etc/audit/ -p wa -k auditconfig
+-w /etc/libaudit.conf -p wa -k auditconfig
+-w /etc/audisp/ -p wa -k audispconfig
+
+##Monitoramento de uso das ferramentas de auditoria
+-w /sbin/auditctl -p x -k audittools
+-w /sbin/auditd -p x -k audittools
+-w /usr/sbin/augenrules -p x -k audittools
+
+## Acesso aos logs de Auditoria
+
+-a always,exit -F path=/usr/sbin/ausearch -F perm=x -F -k T1005_Data_From_Local_System_audit_log
+-a always,exit -F path=/usr/sbin/aureport -F perm=x -F -k T1005_Data_From_Local_System_audit_log
+-a always,exit -F path=/usr/sbin/aulast -F perm=x -F -k T1005_Data_From_Local_System_audit_log
+-a always,exit -F path=/usr/sbin/aulastlogin -F perm=x -F -k T1005_Data_From_Local_System_audit_log
+-a always,exit -F path=/usr/sbin/auvirt -F perm=x -F -k T1005_Data_From_Local_System_audit_log
+
+## Kernel parameters
+-w /etc/sysctl.conf -p wa -k sysctl
+-w /etc/sysctl.d -p wa -k sysctl
+
+## Kernel module loading and unloading
+-a always,exit -F perm=x -F auid!=-1 -F path=/sbin/insmod -k modules
+-a always,exit -F perm=x -F auid!=-1 -F path=/sbin/modprobe -k modules
+-a always,exit -F perm=x -F auid!=-1 -F path=/sbin/rmmod -k modules
+-a always,exit -F arch=b64 -S finit_module -S init_module -S delete_module -F auid!=-1 -k modules
+-a always,exit -F arch=b32 -S finit_module -S init_module -S delete_module -F auid!=-1 -k modules
+
+## KExec usage (all actions)
+-a always,exit -F arch=b64 -S kexec_load -k KEXEC
+-a always,exit -F arch=b32 -S sys_kexec_load -k KEXEC
+
+## Mount operations (only attributable)
+-a always,exit -F arch=b64 -S mount -S umount2 -F auid!=-1 -k mount
+-a always,exit -F arch=b32 -S mount -S umount -S umount2 -F auid!=-1 -k mount
+
+## Change swap (only attributable)
+-a always,exit -F arch=b64 -S swapon -S swapoff -F auid!=-1 -k swap
+-a always,exit -F arch=b32 -S swapon -S swapoff -F auid!=-1 -k swap
+
+## Time
+-a always,exit -F arch=b32 -F uid!=ntp -S adjtimex -S settimeofday -S clock_settime -k time
+-a always,exit -F arch=b64 -F uid!=ntp -S adjtimex -S settimeofday -S clock_settime -k time
+### Local time zone
+-w /etc/localtime -p wa -k localtime
+
+## Cron configuration & scheduled jobs
+-w /etc/cron.allow -p wa -k cron
+-w /etc/cron.deny -p wa -k cron
+-w /etc/cron.d/ -p wa -k cron
+-w /etc/cron.daily/ -p wa -k cron
+-w /etc/cron.hourly/ -p wa -k cron
+-w /etc/cron.monthly/ -p wa -k cron
+-w /etc/cron.weekly/ -p wa -k cron
+-w /etc/crontab -p wa -k cron
+-w /var/spool/cron/ -k cron
+
+## Pam configuration
+-w /etc/pam.d/ -p wa -k pam
+-w /etc/security/limits.conf -p wa  -k pam
+-w /etc/security/limits.d -p wa  -k pam
+-w /etc/security/pam_env.conf -p wa -k pam
+-w /etc/security/namespace.conf -p wa -k pam
+-w /etc/security/namespace.d -p wa -k pam
+-w /etc/security/namespace.init -p wa -k pam
+
+## SSH configuration
+-w /etc/ssh/sshd_config -k sshd
+-w /etc/ssh/sshd_config.d -k sshd
+
+## Mail configuration
+-w /etc/aliases -p wa -k mail
+-w /etc/postfix/ -p wa -k mail
+-w /etc/exim4/ -p wa -k mail
+
+# Systemd
+-w /bin/systemctl -p x -k systemd
+-w /etc/systemd/ -p wa -k systemd
+-w /usr/lib/systemd -p wa -k systemd
+
+
+## Shell/profile configurations
+-w /etc/profile.d/ -p wa -k shell_profiles
+-w /etc/profile -p wa -k shell_profiles
+-w /etc/shells -p wa -k shell_profiles
+-w /etc/bashrc -p wa -k shell_profiles
+-w /etc/csh.cshrc -p wa -k shell_profiles
+-w /etc/csh.login -p wa -k shell_profiles
+-w /etc/fish/ -p wa -k shell_profiles
+-w /etc/zsh/ -p wa -k shell_profiles
+
+ RPM (Redhat/CentOS)
+-w /usr/bin/rpm -p x -k software_mgmt
+-w /usr/bin/yum -p x -k software_mgmt
+
+# DNF (Fedora/RedHat 8/CentOS 8)
+-w /usr/bin/dnf -p x -k software_mgmt
+
+# YAST/Zypper/RPM (SuSE)
+-w /sbin/yast -p x -k software_mgmt
+-w /sbin/yast2 -p x -k software_mgmt
+-w /bin/rpm -p x -k software_mgmt
+-w /usr/bin/zypper -k software_mgmt
+
+# DPKG / APT-GET (Debian/Ubuntu)
+-w /usr/bin/dpkg -p x -k software_mgmt
+-w /usr/bin/apt -p x -k software_mgmt
+-w /usr/bin/apt-add-repository -p x -k software_mgmt
+-w /usr/bin/apt-get -p x -k software_mgmt
+-w /usr/bin/aptitude -p x -k software_mgmt
+-w /usr/bin/wajig -p x -k software_mgmt
+-w /usr/bin/snap -p x -k software_mgmt
+
+# PIP (Python installs)
+-w /usr/bin/pip -p x -k software_mgmt
+-w /usr/bin/pip3 -p x -k software_mgmt
+
+# npm
+## T1072 third party software
+## https://www.npmjs.com
+## https://docs.npmjs.com/cli/v6/commands/npm-audit
+
+-w /usr/bin/npm -p x -k T1072_third_party_software
+
+# Comprehensive Perl Archive Network (CPAN) (CPAN installs)
+## T1072 third party software
+## https://www.cpan.org
+
+-w /usr/bin/cpan -p x -k T1072_third_party_software
+
+# Ruby (RubyGems installs)
+## T1072 third party software
+## https://rubygems.org
+
+-w /usr/bin/gem -p x -k T1072_third_party_software
+
+# LuaRocks (Lua installs)
+## T1072 third party software
+## https://luarocks.org
+
+-w /usr/bin/luarocks -p x -k T1072_third_party_software
+
+# Pacman (Arch Linux)
+## https://wiki.archlinux.org/title/Pacman
+## T1072 third party software
+-w /etc/pacman.conf -p x -k T1072_third_party_software
+-w /etc//etc/pacman.d -p x -k T1072_third_party_software
+
+# Special Software ------------------------------------------------------------
+
+## GDS specific secrets
+-w /etc/puppet/ssl -p wa -k puppet_ssl
+
+## IBM Bigfix BESClient
+-a always,exit -F arch=b64 -S open -F dir=/opt/BESClient -F success=0 -k soft_besclient
+-w /var/opt/BESClient/ -p wa -k soft_besclient
+
+## CHEF https://www.chef.io/chef/
+-w /etc/chef -p wa -k soft_chef
+
+## Salt
+## https://saltproject.io/
+## https://docs.saltproject.io/en/latest/ref/configuration/master.html
+-w /etc/salt -p wa -k soft_salt
+-w /usr/local/etc/salt -p wa -k soft_salt
+
+## Otter
+## https://inedo.com/otter
+-w /etc/otter -p wa -k soft_otter
+
+## Docker
+-w /usr/bin/dockerd -k docker
+-w /usr/bin/docker -k docker
+-w /usr/bin/docker-containerd -k docker
+-w /usr/bin/docker-runc -k docker
+-w /var/lib/docker -k docker
+-w /etc/docker -k docker
+-w /etc/sysconfig/docker -k docker
+-w /etc/sysconfig/docker-storage -k docker
+-w /usr/lib/systemd/system/docker.service -k docker
+-w /usr/lib/systemd/system/docker.socket -k docker
+
+## Virtualization stuff
+-w /usr/bin/qemu-system-x86_64 -p x -k qemu-system-x86_64
+-w /usr/bin/qemu-img -p x -k qemu-img
+-w /usr/bin/qemu-kvm -p x -k qemu-kvm
+-w /usr/bin/qemu -p x -k qemu
+-w /usr/bin/virtualbox -p x -k virtualbox
+-w /usr/bin/virt-manager -p x -k virt-manager
+-w /usr/bin/VBoxManage -p x -k VBoxManage
+
+## Kubelet
+-w /usr/bin/kubelet -k kubelet
+
+## Root command executions
+-a always,exit -F arch=b64 -F euid=0 -S execve -k rootcmd
+-a always,exit -F arch=b32 -F euid=0 -S execve -k rootcmd
+
+## File Deletion Events by User
+-a always,exit -F arch=b32 -S rmdir -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=-1 -k delete
+-a always,exit -F arch=b64 -S rmdir -S unlink -S unlinkat -S rename -S renameat -F auid>=1000 -F auid!=-1 -k delete
+
+## Critical elements access failures
+-a always,exit -F arch=b64 -S open -F dir=/etc -F success=0 -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -F dir=/bin -F success=0 -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -F dir=/sbin -F success=0 -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -F dir=/usr/bin -F success=0 -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -F dir=/usr/sbin -F success=0 -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -F dir=/var -F success=0 -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -F dir=/home -F success=0 -k unauthedfileaccess
+-a always,exit -F arch=b64 -S open -F dir=/srv -F success=0 -k unauthedfileaccess
+
+## Successful permission change
+-a always,exit -F arch=b32 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-perm-change
+-a always,exit -F arch=b64 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-perm-change
+
+## Unsuccessful permission change
+-a always,exit -F arch=b32 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
+-a always,exit -F arch=b64 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
+-a always,exit -F arch=b32 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
+-a always,exit -F arch=b64 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
+
+## gshadow for writes
+-a always,exit -F path=/etc/passwd -F perm=wa -F auid>=1000 -F auid!=unset -F key=user-modify
+-a always,exit -F path=/etc/shadow -F perm=wa -F auid>=1000 -F auid!=unset -F key=user-modify
+-a always,exit -F path=/etc/group -F perm=wa -F auid>=1000 -F auid!=unset -F key=group-modify
+-a always,exit -F path=/etc/gshadow -F perm=wa -F auid>=1000 -F auid!=unset -F key=group-modify
+-a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F key=user-modify
+-a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F key=user-modify
+-a always,exit -F arch=b32 -S open -F a1&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F key=user-modify
+-a always,exit -F arch=b64 -S open -F a1&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F key=user-modify
+-a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F key=user-modify
+-a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F key=user-modify
+-a always,exit -F arch=b32 -S open -F a1&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F key=user-modify
+-a always,exit -F arch=b64 -S open -F a1&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F key=user-modify
+
+## Use of special rights for config changes. This would be use of setuid
+## programs that relate to user accts. This is not all setuid apps because
+## requirements are only for ones that affect system configuration.
+-a always,exit -F path=/usr/sbin/unix_chkpwd -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/sbin/usernetctl -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/sbin/userhelper -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/sbin/seunshare -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/bin/mount -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/bin/newgrp -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/bin/newuidmap -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/bin/gpasswd -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/bin/newgidmap -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/bin/umount -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/bin/passwd -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/bin/crontab -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/bin/at -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+-a always,exit -F path=/usr/sbin/grub2-set-bootflag -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+## The purpose of this rule is to detect when an admin may be abusing power
+## by looking in user's home dir.
+-a always,exit -F dir=/home -F uid=0 -F auid>=1000 -F auid!=unset -C auid!=obj_uid -F key=power-abuse
+
+## Watch for configuration changes to privilege escalation.
+-a always,exit -F path=/etc/sudoers -F perm=wa -F key=special-config-changes
+-a always,exit -F dir=/etc/sudoers.d/ -F perm=wa -F key=special-config-changes
+-w /etc/sudoers -p wa -k actions
+-w /etc/sudoers.d/ -p wa -k actions
+-w /bin/su -p x -k priv_esc
+-w /usr/bin/sudo -p x -k priv_esc
+-w /etc/sudoers -p rw -k priv_esc
+
+## Tools to change group identifiers
+-w /usr/sbin/groupadd -p x -k group_modification
+-w /usr/sbin/groupmod -p x -k group_modification
+-w /usr/sbin/addgroup -p x -k group_modification
+-w /usr/sbin/useradd -p x -k user_modification
+-w /usr/sbin/userdel -p x -k user_modification
+-w /usr/sbin/usermod -p x -k user_modification
+-w /usr/sbin/adduser -p x -k user_modification
+-w /etc/group -p wa -k etcgroup auth
+-w /etc/passwd -p wa -k etcpasswd auth
+-w /etc/gshadow -k etcgroup auth
+-w /etc/shadow -k etcpasswd auth 
+-w /etc/security/opasswd -k opasswd auth
+
+### Changes to other files
+-w /etc/hosts -p wa -k network_modifications
+-w /etc/sysconfig/network -p wa -k network_modifications
+-w /etc/sysconfig/network-scripts -p w -k network_modifications
+-w /etc/network/ -p wa -k network
+-a always,exit -F dir=/etc/NetworkManager/ -F perm=wa -k network_modifications
+-a always,exit -F arch=b32 -S sethostname,setdomainname -F key=system-locale
+-a always,exit -F arch=b64 -S sethostname,setdomainname -F key=system-locale
+-w /etc/issue -p wa -k system-locale
+-w /etc/issue.net -p wa -k system-locale
+-w /etc/hosts -p wa -k system-locale
+-w /etc/hostname -p wa -k system-locale
+-w /etc/sysconfig/network -p wa -k system-locale
+
+## METHODS ---------------------------------------------------------------------------------------------#####
+
+## Reconnaissance
+-w /usr/bin/whoami -p x -k recon
+-w /usr/bin/id -p x -k recon
+-w /bin/hostname -p x -k recon
+-w /bin/uname -p x -k recon
+-w /etc/issue -p r -k recon
+-w /etc/hostname -p r -k recon
+
+## Suspicious activity
+-w /usr/bin/wget -p x -k susp_activity
+-w /usr/bin/curl -p x -k susp_activity
+-w /usr/bin/base64 -p x -k susp_activity
+-w /bin/nc -p x -k susp_activity
+-w /bin/netcat -p x -k susp_activity
+-w /usr/bin/ncat -p x -k susp_activity
+-w /usr/bin/ss -p x -k susp_activity
+-w /usr/bin/netstat -p x -k susp_activity
+-w /usr/bin/ssh -p x -k susp_activity
+-w /usr/bin/scp -p x -k susp_activity
+-w /usr/bin/sftp -p x -k susp_activity
+-w /usr/bin/ftp -p x -k susp_activity
+-w /usr/bin/socat -p x -k susp_activity
+-w /usr/bin/wireshark -p x -k susp_activity
+-w /usr/bin/tshark -p x -k susp_activity
+-w /usr/bin/rawshark -p x -k susp_activity
+-w /usr/bin/rdesktop -p x -k susp_activity
+-w /usr/bin/wlfreerdp -p x -k susp_activity
+-w /usr/bin/xfreerdp -p x -k susp_activity
+-w /usr/bin/nmap -p x -k susp_activity
+
+## T1002 Data Compressed
+
+-w /usr/bin/zip -p x -k T1002_Data_Compressed
+-w /usr/bin/gzip -p x -k T1002_Data_Compressed
+-w /usr/bin/tar -p x -k T1002_Data_Compressed
+-w /usr/bin/bzip2 -p x -k T1002_Data_Compressed
+
+-w /usr/bin/lzip -p x -k T1002_Data_Compressed
+-w /usr/local/bin/lzip -p x -k T1002_Data_Compressed
+
+-w /usr/bin/lz4 -p x -k T1002_Data_Compressed
+-w /usr/local/bin/lz4 -p x -k T1002_Data_Compressed
+
+-w /usr/bin/lzop -p x -k T1002_Data_Compressed
+-w /usr/local/bin/lzop -p x -k T1002_Data_Compressed
+
+-w /usr/bin/plzip -p x -k T1002_Data_Compressed
+-w /usr/local/bin/plzip -p x -k T1002_Data_Compressed
+
+-w /usr/bin/pbzip2 -p x -k T1002_Data_Compressed
+-w /usr/local/bin/pbzip2 -p x -k T1002_Data_Compressed
+
+-w /usr/bin/lbzip2 -p x -k T1002_Data_Compressed
+-w /usr/local/bin/lbzip2 -p x -k T1002_Data_Compressed
+
+-w /usr/bin/pixz -p x -k T1002_Data_Compressed
+-w /usr/local/bin/pixz -p x -k T1002_Data_Compressed
+
+-w /usr/bin/pigz -p x -k T1002_Data_Compressed
+-w /usr/local/bin/pigz -p x -k T1002_Data_Compressed
+-w /usr/bin/unpigz -p x -k T1002_Data_Compressed
+-w /usr/local/bin/unpigz -p x -k T1002_Data_Compressed
+
+-w /usr/bin/zstd -p x -k T1002_Data_Compressed
+-w /usr/local/bin/zstd -p x -k T1002_Data_Compressed
+
+## Added to catch netcat on Ubuntu
+-w /bin/nc.openbsd -p x -k susp_activity
+-w /bin/nc.traditional -p x -k susp_activity
+
+## Sbin suspicious activity
+-w /sbin/iptables -p x -k sbin_susp
+-w /sbin/ip6tables -p x -k sbin_susp
+-w /sbin/ifconfig -p x -k sbin_susp
+-w /usr/sbin/arptables -p x -k sbin_susp
+-w /usr/sbin/ebtables -p x -k sbin_susp
+-w /sbin/xtables-nft-multi -p x -k sbin_susp
+-w /usr/sbin/nft -p x -k sbin_susp
+-w /usr/sbin/tcpdump -p x -k sbin_susp
+-w /usr/sbin/traceroute -p x -k sbin_susp
+-w /usr/sbin/ufw -p x -k sbin_susp
+
+## pkexec invocation
+### may indicate privilege escalation CVE-2021-4034
+-w /usr/bin/pkexec -p x -k pkexec
+
+## Suspicious shells
+#-w /bin/ash -p x -k susp_shell
+#-w /bin/bash -p x -k susp_shell
+#-w /bin/csh -p x -k susp_shell
+#-w /bin/dash -p x -k susp_shell
+#-w /bin/busybox -p x -k susp_shell
+#-w /bin/ksh -p x -k susp_shell
+#-w /bin/fish -p x -k susp_shell
+#-w /bin/tcsh -p x -k susp_shell
+#-w /bin/tclsh -p x -k susp_shell
+#-w /bin/zsh -p x -k susp_shell
+#-w /bin/xonsh -p x -k susp_shell
+#-w /usr/local/bin/xonsh -p x -k susp_shell
+#-w /bin/open -p x -k susp_shell
+#-w /bin/sh -p x -k susp_shell
+#-w /bin/rbash -p x -k susp_shell
+
+## Shell/profile configurations
+-w /etc/profile.d/ -p wa -k shell_profiles
+-w /etc/profile -p wa -k shell_profiles
+-w /etc/shells -p wa -k shell_profiles
+-w /etc/bashrc -p wa -k shell_profiles
+-w /etc/csh.cshrc -p wa -k shell_profiles
+-w /etc/csh.login -p wa -k shell_profiles
+-w /etc/fish/ -p wa -k shell_profiles
+-w /etc/zsh/ -p wa -k shell_profiles
+
+### https://github.com/xxh/xxh
+
+-w /usr/local/bin/xxh.bash -p x -k susp_shell
+-w /usr/local/bin/xxh.xsh -p x -k susp_shell
+-w /usr/local/bin/xxh.zsh -p x -k susp_shell
+
+## Injection
+### These rules watch for code injection by the ptrace facility.
+### This could indicate someone trying to do something bad or just debugging
+-a always,exit -F arch=b32 -S ptrace -F a0=0x4 -k code_injection
+-a always,exit -F arch=b64 -S ptrace -F a0=0x4 -k code_injection
+-a always,exit -F arch=b32 -S ptrace -F a0=0x5 -k data_injection
+-a always,exit -F arch=b64 -S ptrace -F a0=0x5 -k data_injection
+-a always,exit -F arch=b32 -S ptrace -F a0=0x6 -k register_injection
+-a always,exit -F arch=b64 -S ptrace -F a0=0x6 -k register_injection
+-a always,exit -F arch=b32 -S ptrace -k tracing
+-a always,exit -F arch=b64 -S ptrace -k tracing
